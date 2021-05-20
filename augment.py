@@ -5,36 +5,39 @@ import imageio
 import argparse
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
+import random
+import string
+from dataclasses import dataclass, asdict
 
-
-class AugmenterConfig():
-    EXTENSION = 'default'
-    IMG_MULTIPLIER = 1
-    WIDTH = 224
-    HEIGHT = 224
-    PAD_MODE = 'edge'
-    POSITION = 'center'
+@dataclass
+class AugmenterConfig:
+    name: str = 'basic'
+    extension: str = 'default'
+    width: int = 224
+    height: int = 224
+    pad_mode: str = 'edge'
+    position: str = 'center'
 
 
 def basic_augmenter(cfg: AugmenterConfig):
     return iaa.Sequential([
-        iaa.Resize({'shorter-side': 'keep-aspect-ratio', 'longer-side': max(cfg.WIDTH, cfg.HEIGHT)}),
-        iaa.PadToFixedSize(width=cfg.WIDTH, height=cfg.HEIGHT, position=cfg.POSITION, pad_mode=cfg.PAD_MODE)
+        iaa.Resize({'shorter-side': 'keep-aspect-ratio', 'longer-side': max(cfg.width, cfg.height)}),
+        iaa.PadToFixedSize(width=cfg.width, height=cfg.height, position=cfg.position, pad_mode=cfg.pad_mode, pad_cval=(0, 0))
     ])
 
 
 def basic_grayscale_augmenter(cfg: AugmenterConfig):
     return iaa.Sequential([
-        iaa.Resize({'shorter-side': 'keep-aspect-ratio', 'longer-side': max(cfg.WIDTH, cfg.HEIGHT)}),
-        iaa.PadToFixedSize(width=cfg.WIDTH, height=cfg.HEIGHT, position=cfg.POSITION, pad_mode=cfg.PAD_MODE),
+        iaa.Resize({'shorter-side': 'keep-aspect-ratio', 'longer-side': max(cfg.width, cfg.height)}),
+        iaa.PadToFixedSize(width=cfg.width, height=cfg.height, position=cfg.position, pad_mode=cfg.pad_mode),
         iaa.Grayscale()
     ])
 
 
 def grayscale_augmenter(cfg: AugmenterConfig):
     return iaa.Sequential([
-        iaa.Resize({'shorter-side': 'keep-aspect-ratio', 'longer-side': max(cfg.WIDTH, cfg.HEIGHT)}),
-        iaa.PadToFixedSize(width=cfg.WIDTH, height=cfg.HEIGHT, position=cfg.POSITION, pad_mode=cfg.PAD_MODE),
+        iaa.Resize({'shorter-side': 'keep-aspect-ratio', 'longer-side': max(cfg.width, cfg.height)}),
+        iaa.PadToFixedSize(width=cfg.width, height=cfg.height, position=cfg.position, pad_mode=cfg.pad_mode),
         iaa.Sometimes(0.5, iaa.Affine(
             scale={"x": (0.8, 1.2), "y": (0.8, 1.2)},
             translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)},
@@ -148,46 +151,71 @@ class Augmenter():
         'grayscale': grayscale_augmenter,
     }
 
-    def __init__(self, config=AugmenterConfig(), augmenter_name='basic'):
+    def __init__(self, config=AugmenterConfig()):
         self.cfg = config
         try:
-            self.augmenter = self.aug_map[augmenter_name](self.cfg)
+            self.augmenter = self.aug_map[self.cfg.name](self.cfg)
         except KeyError:
-            raise Exception(f'Invalid augmenter name: {augmenter_name}')
+            raise Exception(f'Invalid augmenter name: {self.cfg.name}')
 
     def __call__(self, *args, **kwargs):
         return self.augmenter(*args, **kwargs)
 
 
-def process_single_directory(src: Path, dst: Path, augmenter: Augmenter):
-    for file in src.iterdir():
-        image = np.array(imageio.imread(file))
-        multiplier = augmenter.cfg.IMG_MULTIPLIER
-        augmented = augmenter(images=[image] * multiplier)
-        for idx, aug_img in enumerate(augmented):
-            dst_filename = f'{file.stem}_{idx}{file.suffix}'
-            imageio.imwrite(dst / dst_filename, aug_img)
+    def process_single_directory(self, src: Path, dst: Path, img_target: int):
+        files = list(src.iterdir())
+        target = img_target if img_target != 0 else len(files) 
+        images = []
+        if len(files) < target:
+            images = files
+            for _ in range(target-len(files)):
+                images.append(random.choice(files))
+        else:
+            images = list(random.sample(files, target))
+        if False:
+            loaded_images = [np.array(imageio.imread(file)) for file in images]
+            augmented = self.augmenter(images=loaded_images)
+            for aug_img, file in zip(augmented, images):
+                dst_filename = f'{file.stem}{file.suffix}'
+                dst_path = dst / dst_filename
+                while dst_path.exists():
+                    suffix = ''.join(random.choice(string.ascii_letters) for _ in range(5))
+                    dst_filename = f'{file.stem}_{suffix}{file.suffix}'
+                    dst_path = dst / dst_filename
+                imageio.imwrite(dst_path, aug_img)
+        else:
+            batch_size = 16
+            for i in range(0, len(images), batch_size):
+                loaded_images = [np.array(imageio.imread(file)) for file in images[i:i+batch_size]]
+                augmented = self.augmenter(images=loaded_images)
+                for aug_img, file in zip(augmented, images[i:i+batch_size]):
+                    dst_filename = f'{file.stem}{file.suffix}'
+                    dst_path = dst / dst_filename
+                    while dst_path.exists():
+                        suffix = ''.join(random.choice(string.ascii_letters) for _ in range(5))
+                        dst_filename = f'{file.stem}_{suffix}{file.suffix}'
+                        dst_path = dst / dst_filename
+                    imageio.imwrite(dst_path, aug_img)
 
 
-def get_relative_directories(src: Path):
-    dirs = []
-    for i in src.rglob('*'):
-        if i.is_dir():
-            dirs.append(i.relative_to(src))
-    return dirs
+    def __get_relative_directories(self, src: Path):
+        dirs = []
+        for i in src.rglob('*'):
+            if i.is_dir():
+                dirs.append(i.relative_to(src))
+        return dirs
 
-
-def process_recursive_directories(src: Path, dst: Path, augmenter: Augmenter):
-    rel_dirs = get_relative_directories(src)
-    src_dirs = [src / rel_dir for rel_dir in rel_dirs]
-    dst_dirs = [dst / rel_dir for rel_dir in rel_dirs]
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        futures = []
-        for src_dir, dst_dir in zip(src_dirs, dst_dirs):
-            dst_dir.mkdir(exist_ok=True, parents=True)
-            futures.append(executor.submit(process_single_directory, src_dir, dst_dir, augmenter))
-        for future in futures:
-            future.result()
+    def process_recursive_directories(self, src: Path, dst: Path, img_target=0, num_workers=4):
+        rel_dirs = self.__get_relative_directories(src)
+        src_dirs = [src / rel_dir for rel_dir in rel_dirs]
+        dst_dirs = [dst / rel_dir for rel_dir in rel_dirs]
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = []
+            for src_dir, dst_dir in zip(src_dirs, dst_dirs):
+                dst_dir.mkdir(exist_ok=True, parents=True)
+                futures.append(executor.submit(self.process_single_directory, src_dir, dst_dir, img_target))
+            for future in futures:
+                future.result()
 
 
 if __name__ == '__main__':
@@ -195,13 +223,13 @@ if __name__ == '__main__':
     parser.add_argument('-i', required=True, help='Directory path with images to augment', dest='src')
     parser.add_argument('-o', required=True, help='Output directory for augmented images', dest='dst')
     parser.add_argument('-a', default='basic', help=f'Augmenter name. Available: {list(Augmenter.aug_map.keys())}. Default: basic.', dest='aug_name')
-    parser.add_argument('-N', default=AugmenterConfig.IMG_MULTIPLIER, type=int, help=f'Number of replications per image', dest='IMG_MULTIPLIER')
-    parser.add_argument('-W', default=AugmenterConfig.WIDTH, type=int, help=f'Target image width', dest='WIDTH')
-    parser.add_argument('-H', default=AugmenterConfig.HEIGHT, type=int, help=f'Target image  height', dest='HEIGHT')
+    parser.add_argument('-N', default=0, type=int, help=f'Target number of images per class', dest='img_target')
+    parser.add_argument('-W', default=AugmenterConfig.width, type=int, help=f'Target image width', dest='width')
+    parser.add_argument('-H', default=AugmenterConfig.height, type=int, help=f'Target image  height', dest='height')
     args = parser.parse_args()
     aug_config = AugmenterConfig()
-    aug_config.IMG_MULTIPLIER = args.IMG_MULTIPLIER
-    aug_config.WIDTH = args.WIDTH
-    aug_config.HEIGHT = args.HEIGHT
-    aug = Augmenter(aug_config, args.aug_name)
-    process_recursive_directories(Path(args.src), Path(args.dst), aug)
+    aug_config.name = args.aug_name
+    aug_config.width = args.width
+    aug_config.height = args.height
+    aug = Augmenter(aug_config)
+    aug.process_recursive_directories(Path(args.src), Path(args.dst), args.img_target)
