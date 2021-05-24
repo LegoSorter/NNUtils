@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 import logging
 import random
 import shutil
+import logging
 
 def process_single_directory(src: Path):
     items = len([f for f in src.glob('*') if f.is_file()])
@@ -22,7 +23,7 @@ def get_relative_directories(src: Path):
     return dirs
 
 def move_images(directory, number_of_images, dst, extension='jpg'):
-    images = directory.glob(f'*.{extension}')
+    images = directory.glob('*')
     for image in random.sample(list(images), number_of_images):
         image.rename(dst / image.name)
 
@@ -39,6 +40,7 @@ def split_dataset(src: Path, n: int, dst1: Path, dst2: Path):
     for src_dir, dst_dir in zip(src_dirs,dst_dirs):
         dst_dir.mkdir(exist_ok=True, parents=True)
         to_move = lengths[src_dir] - n
+        logging.error(to_move)
         if to_move > 0:
             move_images(src_dir, to_move, dst_dir)
 
