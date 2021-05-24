@@ -90,7 +90,8 @@ class ModelSelector():
         self.mb = ModelBuilder(cfg)
         try:
             model_module = self.get_model_map()[model_name]
-            self.model = self.mb.generic_builder(model_name, model_module, lr=self.cfg['pre_training_learning_rate'])
+            self.model = self.mb.generic_builder(
+                model_name, model_module, lr=self.cfg['pre_training_learning_rate'])
         except KeyError:
             raise Exception(f'Invalid model name: {model_name}')
 
@@ -110,12 +111,14 @@ class ModelSelector():
         )
         return model
 
+
 if __name__ == '__main__':
     wandb.init(project='lego447classes',
                config={
                    'model': 'EfficientNetB0',
                    'img_shape': (224, 224, 3),
-                   'max_epochs': 100,
+                   'max_epochs': 200,
+                   'max_epochs_per_fit': 15,
                    'num_classes': 447,
                    'batch_size': 128,
                    'architecture': 'CNN',
@@ -162,24 +165,24 @@ if __name__ == '__main__':
     fine_tuning_callbacks = [wandb_callback,
                              fine_tuning_early_stopping_callback]
 
-    max_epochs_per_fit = 50
     epochs_to_date = 0
     # pre-training
     wandb.log({'trainable_layers': len(
         [1 for layer in model.layers if layer.trainable is True])})
     history = model.fit(train_generator, validation_data=val_generator,
-                        epochs=max_epochs_per_fit, callbacks=pre_training_callbacks)
+                        epochs=cfg['max_epochs_per_fit'], callbacks=pre_training_callbacks)
     if cfg['transfer_learning'] and not cfg['pre_training_only']:
         for to_unfreeze in range(cfg['fine_tuning_unfreeze_interval'], len(model.layers), cfg['fine_tuning_unfreeze_interval']):
             model = ms.unfreeze_top_n_layers(
                 to_unfreeze, lr=cfg['fine_tuning_learning_rate'])
-            trainable_layers = len([1 for layer in model.layers if layer.trainable is True])
+            trainable_layers = len(
+                [1 for layer in model.layers if layer.trainable is True])
             wandb.log({'trainable_layers': trainable_layers})
             logging.info(f'Fine-tuning on {trainable_layers}')
             epochs_to_date += len(history.history['loss'])
             if epochs_to_date >= cfg['max_epochs']:
                 break
-            epochs_to_do = epochs_to_date+max_epochs_per_fit if epochs_to_date + \
-                max_epochs_per_fit < cfg['max_epochs'] else cfg['max_epochs']
+            epochs_to_do = epochs_to_date+cfg['max_epochs_per_fit'] if epochs_to_date + \
+                cfg['max_epochs_per_fit'] < cfg['max_epochs'] else cfg['max_epochs']
             history = model.fit(train_generator, validation_data=val_generator, initial_epoch=epochs_to_date,
                                 epochs=epochs_to_do, callbacks=fine_tuning_callbacks)
