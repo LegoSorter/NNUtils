@@ -11,6 +11,7 @@ from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
 import os
 import logging
+import argparse
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 
@@ -113,41 +114,48 @@ class ModelSelector():
 
 
 if __name__ == '__main__':
-    wandb.init(project='lego447classes',
-               config={
-                   'model': 'EfficientNetB0',
-                   'img_shape': (224, 224, 3),
-                   'max_epochs': 200,
-                   'max_epochs_per_fit': 15,
-                   'num_classes': 447,
-                   'batch_size': 128,
-                   'architecture': 'CNN',
-                   'dataset': 'LEGO_447c',
-                   'wandb_val_images': 10,
-                   'transfer_learning': True,
-                   'pre_training_only': False,
-                   'pre_training_learning_rate': 1e-2,
-                   'pre_training_min_delta': 0.01,
-                   'pre_training_patience': 3,
-                   'fine_tuning_learning_rate': 1e-4,
-                   'fine_tuning_min_delta': 0,
-                   'fine_tuning_patience': 0,
-                   'fine_tuning_unfreeze_interval': 10
-               })
-    cfg = wandb.config
+    config = {
+        'model': 'EfficientNetB0',
+        'img_shape': (224, 224, 3),
+        'max_epochs': 200,
+        'max_epochs_per_fit': 5,
+        'num_classes': 5,
+        'batch_size': 128,
+        'architecture': 'CNN',
+        'dataset': 'LEGO_447c',
+        'wandb_val_images': 10,
+        'transfer_learning': True,
+        'pre_training_epochs': 5,
+        'pre_training_only': False,
+        'pre_training_learning_rate': 5e-2,
+        'pre_training_min_delta': 0.01,
+        'pre_training_patience': 3,
+        'fine_tuning_learning_rate': 1e-4,
+        'fine_tuning_min_delta': 0.0,
+        'fine_tuning_patience': 0,
+        'fine_tuning_unfreeze_interval': 10
+    }
+
+    parser = argparse.ArgumentParser(description='Sweep train.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    for key, value in config.items():
+        parser.add_argument(f'--{key}', type=type(value), default=value, dest=key, help=f'{key}') 
+    args = parser.parse_args()
+    wandb.init(config=args)
+
     root = logging.getLogger()
     root.setLevel(logging.INFO)
+    cfg = wandb.config
     ms = ModelSelector(cfg)
     model = ms.get_model()
     width, height, depth = cfg['img_shape']
     train_datagen = ImageDataGenerator()  # rescale=1. / 255)
     train_generator = train_datagen.flow_from_directory(
-        '/macierz/home/s165115/legosymlink/kzawora/dataset_processed/train',
+        '/macierz/home/s165115/legosymlink/kzawora/small_test/train',#'/macierz/home/s165115/legosymlink/kzawora/dataset_processed/train',
         target_size=(width, height),
         batch_size=cfg['batch_size'], shuffle=True)
     val_datagen = ImageDataGenerator()  # rescale=1. / 255)
     val_generator = val_datagen.flow_from_directory(
-        '/macierz/home/s165115/legosymlink/kzawora/dataset_processed/val',
+        '/macierz/home/s165115/legosymlink/kzawora/small_test/val',
         target_size=(width, height),
         batch_size=cfg['batch_size'], shuffle=True)
 
@@ -170,7 +178,7 @@ if __name__ == '__main__':
     wandb.log({'trainable_layers': len(
         [1 for layer in model.layers if layer.trainable is True])})
     history = model.fit(train_generator, validation_data=val_generator,
-                        epochs=cfg['max_epochs_per_fit'], callbacks=pre_training_callbacks)
+                        epochs=cfg['pre_training_epochs'], callbacks=pre_training_callbacks)
 
     # fine-tuning
     if cfg['transfer_learning'] and not cfg['pre_training_only']:
