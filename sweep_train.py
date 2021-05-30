@@ -118,14 +118,14 @@ if __name__ == '__main__':
         'model': 'EfficientNetB0',
         'img_shape': (224, 224, 3),
         'max_epochs': 200,
-        'max_epochs_per_fit': 5,
-        'num_classes': 5,
+        'max_epochs_per_fit': 10,
+        'num_classes': 447,
         'batch_size': 128,
         'architecture': 'CNN',
         'dataset': 'LEGO_447c',
         'wandb_val_images': 10,
         'transfer_learning': True,
-        'pre_training_epochs': 5,
+        'pre_training_epochs': 10,
         'pre_training_only': False,
         'pre_training_learning_rate': 5e-2,
         'pre_training_min_delta': 0.01,
@@ -133,14 +133,14 @@ if __name__ == '__main__':
         'fine_tuning_learning_rate': 1e-4,
         'fine_tuning_min_delta': 0.0,
         'fine_tuning_patience': 0,
-        'fine_tuning_unfreeze_interval': 10
+        'fine_tuning_unfreeze_interval': 15
     }
 
     parser = argparse.ArgumentParser(description='Sweep train.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     for key, value in config.items():
         parser.add_argument(f'--{key}', type=type(value), default=value, dest=key, help=f'{key}') 
     args = parser.parse_args()
-    wandb.init(config=args)
+    wandb.init(project='lego447classes', config=args)
 
     root = logging.getLogger()
     root.setLevel(logging.INFO)
@@ -150,12 +150,12 @@ if __name__ == '__main__':
     width, height, depth = cfg['img_shape']
     train_datagen = ImageDataGenerator()  # rescale=1. / 255)
     train_generator = train_datagen.flow_from_directory(
-        '/macierz/home/s165115/legosymlink/kzawora/small_test/train',#'/macierz/home/s165115/legosymlink/kzawora/dataset_processed/train',
+        '/macierz/home/s165115/legosymlink/kzawora/dataset_new/train',#'/macierz/home/s165115/legosymlink/kzawora/dataset_processed/train',
         target_size=(width, height),
         batch_size=cfg['batch_size'], shuffle=True)
     val_datagen = ImageDataGenerator()  # rescale=1. / 255)
     val_generator = val_datagen.flow_from_directory(
-        '/macierz/home/s165115/legosymlink/kzawora/small_test/val',
+        '/macierz/home/s165115/legosymlink/kzawora/dataset_new/val',
         target_size=(width, height),
         batch_size=cfg['batch_size'], shuffle=True)
 
@@ -176,7 +176,7 @@ if __name__ == '__main__':
     epochs_to_date = 0
     # pre-training
     wandb.log({'trainable_layers': len(
-        [1 for layer in model.layers if layer.trainable is True])})
+        [1 for layer in model.layers if layer.trainable is True])}, commit=False)
     history = model.fit(train_generator, validation_data=val_generator,
                         epochs=cfg['pre_training_epochs'], callbacks=pre_training_callbacks)
 
@@ -187,7 +187,7 @@ if __name__ == '__main__':
                 to_unfreeze, lr=cfg['fine_tuning_learning_rate'])
             trainable_layers = len(
                 [1 for layer in model.layers if layer.trainable is True])
-            wandb.log({'trainable_layers': trainable_layers})
+            wandb.log({'trainable_layers': trainable_layers}, commit=False)
             logging.info(f'Fine-tuning on {trainable_layers}')
             epochs_to_date += len(history.history['loss'])
             if epochs_to_date >= cfg['max_epochs']:

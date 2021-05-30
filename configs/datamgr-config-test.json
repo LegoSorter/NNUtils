@@ -1,0 +1,30 @@
+{
+  "datasets": [
+    {
+      "name":  "photos",
+      "src": "/macierz/home/s165115/legosymlink/kzawora/test2/src1",
+      "dst": "/macierz/home/s165115/legosymlink/kzawora/test2/dst1",
+      "train_target": 50,
+      "val_target": 10
+    },
+    {
+      "name":  "renders",
+      "src": "/macierz/home/s165115/legosymlink/kzawora/test2/src2",
+      "dst": "/macierz/home/s165115/legosymlink/kzawora/test2/dst2",
+      "train_target": 100,
+      "val_target": 5
+    }
+  ],
+  "augmenter_config": {
+      "name": "grayscale",
+      "extension": ".jpg",
+      "width": 224,
+      "height": 224,
+      "pad_mode": "edge",
+      "position": "center"
+  },
+  "cpu_threads": 32,
+  "dst": "/macierz/home/s165115/legosymlink/kzawora/test-dst",
+  "delete_individual_dsts": false,
+  "split_augment_merge": true
+}

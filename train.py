@@ -11,29 +11,6 @@ from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
 import os
 import logging
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-
-
-gpus = tf.config.list_physical_devices('GPU')
-for gpu in gpus:
-    tf.config.experimental.set_memory_growth(gpu, True)
-
-
-img_augmentation = Sequential(
-    [
-        preprocessing.RandomRotation(factor=0.15),
-        #preprocessing.RandomTranslation(height_factor=0.1, width_factor=0.1),
-        # preprocessing.RandomFlip(),
-        preprocessing.RandomContrast(factor=0.1),
-    ],
-    name="img_augmentation",
-)
-
-# Set the random seeds
-os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
-random.seed(hash("setting random seeds") % 2**32 - 1)
-np.random.seed(hash("improves reproducibility") % 2**32 - 1)
-tf.random.set_seed(hash("by removing stochasticity") % 2**32 - 1)
 
 
 class ModelBuilder():
@@ -43,6 +20,16 @@ class ModelBuilder():
     def generic_builder(self, name, net, lr=1e-2, dropout_rate=0.2):
         cfg = self.cfg
         inputs = layers.Input(shape=cfg['img_shape'])
+
+        img_augmentation = Sequential(
+            [
+                preprocessing.RandomRotation(factor=0.15),
+                #preprocessing.RandomTranslation(height_factor=0.1, width_factor=0.1),
+                # preprocessing.RandomFlip(),
+                preprocessing.RandomContrast(factor=0.1),
+            ],
+            name="img_augmentation",
+        )
         x = img_augmentation(inputs)
         if cfg['transfer_learning']:
             model = net(include_top=False, input_tensor=x, weights='imagenet')
@@ -137,6 +124,17 @@ if __name__ == '__main__':
     cfg = wandb.config
     root = logging.getLogger()
     root.setLevel(logging.INFO)
+
+    gpus = tf.config.list_physical_devices('GPU')
+    for gpu in gpus:
+        tf.config.experimental.set_memory_growth(gpu, True)
+
+    # Set the random seeds
+    os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
+    random.seed(hash("setting random seeds") % 2**32 - 1)
+    np.random.seed(hash("improves reproducibility") % 2**32 - 1)
+    tf.random.set_seed(hash("by removing stochasticity") % 2**32 - 1)
+
     ms = ModelSelector(cfg)
     model = ms.get_model()
     width, height, depth = cfg['img_shape']
