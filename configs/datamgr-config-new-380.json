@@ -1,0 +1,30 @@
+{
+  "datasets": [
+    {
+      "name":  "photos",
+      "src": "/macierz/home/s165115/legosymlink/kzawora/final_dataset/final_dataset/photos",
+      "dst": "/macierz/home/s165115/legosymlink/kzawora/dataset_new_380_small/photos",
+      "train_target": 150,
+      "val_target": 30
+    },
+    {
+      "name":  "renders",
+      "src": "/macierz/home/s165115/legosymlink/kzawora/final_dataset/final_dataset/renders",
+      "dst": "/macierz/home/s165115/legosymlink/kzawora/dataset_new_380_small/renders",
+      "train_target": 350,
+      "val_target": 20
+    }
+  ],
+  "augmenter_config": {
+      "name": "grayscale",
+      "extension": ".jpg",
+      "width": 380,
+      "height": 380,
+      "pad_mode": "edge",
+      "position": "center"
+  },
+  "cpu_threads": 32,
+  "dst": "/macierz/home/s165115/legosymlink/kzawora/dataset_new_380_small",
+  "delete_individual_dsts": true,
+  "split_augment_merge": true
+}

@@ -2,29 +2,31 @@
   "datasets": [
     {
       "name":  "photos",
-      "src": "/macierz/home/s165115/legosymlink/kzawora/final_dataset/final_dataset/photos",
-      "dst": "/macierz/home/s165115/legosymlink/kzawora/dataset_processed/photos",
-      "train_target": 500,
-      "val_target": 100
+      "src": "/macierz/home/s165115/legosymlink/kzawora/test2/src1",
+      "dst": "/macierz/home/s165115/legosymlink/kzawora/test2/dst1",
+      "train_target": 50,
+      "val_target": 10
     },
     {
       "name":  "renders",
-      "src": "/macierz/home/s165115/legosymlink/kzawora/final_dataset/final_dataset/renders",
-      "dst": "/macierz/home/s165115/legosymlink/kzawora/dataset_processed/renders",
-      "train_target": 1000,
-      "val_target": 50
+      "src": "/macierz/home/s165115/legosymlink/kzawora/test2/src2",
+      "dst": "/macierz/home/s165115/legosymlink/kzawora/test2/dst2",
+      "train_target": 100,
+      "val_target": 5
     }
   ],
   "augmenter_config": {
       "name": "grayscale",
       "extension": ".jpg",
-      "width": 224,
-      "height": 224,
+      "width": 600,
+      "height": 600,
       "pad_mode": "edge",
       "position": "center"
   },
   "cpu_threads": 32,
-  "dst": "/macierz/home/s165115/legosymlink/kzawora/dataset_processed",
+  "dst": "/macierz/home/s165115/legosymlink/kzawora/test_new6",
   "delete_individual_dsts": true,
-  "split_augment_merge": true
+  "split_augment_merge": true,
+  "create_resized_versions": true,
+  "size_list": [224, 240, 260, 300, 380, 456, 528]
 }

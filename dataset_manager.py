@@ -4,6 +4,7 @@ import dacite as dc
 import shutil
 from augment import Augmenter, AugmenterConfig
 from split import split_dataset, split_dataset_by_ratio
+from resize import resize_dataset
 import logging
 from dataclasses import dataclass, asdict
 from typing import List
@@ -30,6 +31,8 @@ class DatasetConfig:
     dst: Path
     delete_individual_dsts: bool
     split_augment_merge: bool
+    create_resized_versions: bool
+    size_list: List[int]
 
 
 def copy_wrapper(src, dst, *args, **kwargs):
@@ -94,16 +97,26 @@ class DatasetManager():
                 dataset.src, dataset.dst / 'aug' / 'val', dataset.val_target, self.cfg.cpu_threads)
         logging.info('Augmenting done! Merging...')
 
+        dst = self.cfg.dst / 'train'  if not self.cfg.create_resized_versions else self.cfg.dst / f'orig_{self.cfg.augmenter_config.width}x{self.cfg.augmenter_config.height}'
         for dataset in self.cfg.datasets:
-            shutil.copytree(dataset.dst / 'aug' / 'train', self.cfg.dst / 'train', 
+            shutil.copytree(dataset.dst / 'aug' / 'train', dst / 'train', 
                             dirs_exist_ok=True, copy_function=copy_wrapper)
-            shutil.copytree(dataset.dst / 'aug' / 'val', self.cfg.dst / 'val', 
+            shutil.copytree(dataset.dst / 'aug' / 'val', dst / 'val', 
                             dirs_exist_ok=True, copy_function=copy_wrapper)
-        if self.cfg.delete_individual_dsts:
-            logging.info('Merging done! Have a good day!')
+        
+        if self.cfg.create_resized_versions:
+            logging.info('Merging done! Resizing...')
+            sizes = list(map(int, self.cfg.size_list))
+            resize_dataset(dst / 'train', self.cfg.dst, sizes, prefix='train')
+            resize_dataset(dst / 'val', self.cfg.dst, sizes, prefix='val')
+            logging.info('Resizing done! Cleaning up...')
+        else:
+            logging.info('Merging done! Cleaning up...')
+        
+        if not self.cfg.delete_individual_dsts:
+            logging.info('Merging/resizing done! Have a good day!')
             return
-        logging.info('Merging done! Cleaning up...')
-
+            
         for dataset in self.cfg.datasets:
             shutil.rmtree(dataset.dst)
         logging.info('Cleaning done! Have a good day!')

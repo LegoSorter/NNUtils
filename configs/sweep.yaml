@@ -9,11 +9,11 @@ parameters:
     max: 1
   max_epochs_per_fit:
     distribution: int_uniform
-    min: 5
-    max: 15
+    min: 10
+    max: 20
   fine_tuning_learning_rate: 
     min: 1e-5
-    max: 1e-3
+    max: 1e-2
   fine_tuning_min_delta: 
     min: 0
     max: 0.1
@@ -25,6 +25,8 @@ parameters:
     min: 10
     max: 50
   max_epochs: 
-    value: 30
+    value: 50
 early_terminate:
   type: hyperband
+
+  

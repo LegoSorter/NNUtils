@@ -1,0 +1,16 @@
+program: train.py
+method: grid
+metric:
+  name: val_accuracy
+  goal: maximize
+parameters:
+  pre_training_learning_rate:
+    values: [5, 1, 1e-1, 1e-2, 1e-3, 1e-4]
+  max_epochs: 
+    value: 20
+  pre_training_only:
+    value: true
+early_terminate:
+  type: hyperband
+
+  
