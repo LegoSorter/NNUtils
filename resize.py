@@ -23,7 +23,9 @@ def get_relative_directories(src: Path):
     return dirs
 
 def resize_images_in_directory(src, dst, rel_dir, sizes):
-    images = src.glob(f'*.jpg')
+    images = src.glob(f'*.jpeg')
+   # print(len(list(images)))
+   # return
     for image in images:
         image_path = Path(image)
         img = Image.open(image_path)
@@ -55,6 +57,8 @@ if __name__ == '__main__':
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-o', help='Output directory', dest='dst')
     parser.add_argument('-l', default=[], nargs='+', dest="size_list")
+    parser.add_argument('-p', dest="prefix", default=None)
+
     args = parser.parse_args()
-    resize_dataset(Path(args.src), Path(args.dst), list(map(int,args.size_list)))
+    resize_dataset(Path(args.src), Path(args.dst), list(map(int,args.size_list)), Path(args.prefix))
 

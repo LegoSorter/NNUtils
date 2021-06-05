@@ -130,9 +130,9 @@ def grayscale_augmenter(cfg: AugmenterConfig):
 
                        # In some images move pixels locally around (with random
                        # strengths).
-                       iaa.Sometimes(0.5,
-                                     iaa.ElasticTransformation(alpha=(0.5, 3.5), sigma=0.25)
-                                     ),
+                       #iaa.Sometimes(0.5,
+                       #              iaa.ElasticTransformation(alpha=(0.5, 3.5), sigma=0.25)
+                       #              ),
 
                        # In some images distort local areas with varying strength.
                        #iaa.Sometimes(0.5, iaa.PiecewiseAffine(scale=(0.01, 0.05)))
@@ -193,9 +193,9 @@ class Augmenter():
                     dst_path = dst / dst_filename
                     while dst_path.exists():
                         suffix = ''.join(random.choice(string.ascii_letters) for _ in range(5))
-                        dst_filename = f'{file.stem}_{suffix}{file.suffix}'
+                        dst_filename = f'{file.stem}_{suffix}.jpg'
                         dst_path = dst / dst_filename
-                    imageio.imwrite(dst_path, aug_img)
+                    imageio.imwrite(dst_path, aug_img, format='jpeg')
 
 
     def __get_relative_directories(self, src: Path):
