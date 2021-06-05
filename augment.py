@@ -189,7 +189,7 @@ class Augmenter():
                 loaded_images = [np.array(imageio.imread(file)) for file in images[i:i+batch_size]]
                 augmented = self.augmenter(images=loaded_images)
                 for aug_img, file in zip(augmented, images[i:i+batch_size]):
-                    dst_filename = f'{file.stem}{file.suffix}'
+                    dst_filename = f'{file.stem}.jpg'
                     dst_path = dst / dst_filename
                     while dst_path.exists():
                         suffix = ''.join(random.choice(string.ascii_letters) for _ in range(5))
