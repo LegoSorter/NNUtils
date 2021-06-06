@@ -97,7 +97,7 @@ class DatasetManager():
                 dataset.src, dataset.dst / 'aug' / 'val', dataset.val_target, self.cfg.cpu_threads)
         logging.info('Augmenting done! Merging...')
 
-        dst = self.cfg.dst / 'train'  if not self.cfg.create_resized_versions else self.cfg.dst / f'orig_{self.cfg.augmenter_config.width}x{self.cfg.augmenter_config.height}'
+        dst = self.cfg.dst if not self.cfg.create_resized_versions else self.cfg.dst / f'orig_{self.cfg.augmenter_config.width}x{self.cfg.augmenter_config.height}'
         for dataset in self.cfg.datasets:
             shutil.copytree(dataset.dst / 'aug' / 'train', dst / 'train', 
                             dirs_exist_ok=True, copy_function=copy_wrapper)

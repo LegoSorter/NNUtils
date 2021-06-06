@@ -126,20 +126,31 @@ class ModelSelector():
 
 
 class WandbTimeCallback(tf.keras.callbacks.Callback):
-    def __init__(self, start_time, items_per_epoch):
+    def __init__(self, start_time, items_per_epoch, time_limit=None):
         self.start_time = start_time
         self.items_per_epoch = items_per_epoch
+        self.total_time = 0
+        self.time_limit = time_limit
+        self.exceeded_time_limit = False
 
     def on_epoch_begin(self, epoch, logs=None):
         self.epoch_time_start = time.time()
 
     def on_epoch_end(self, epoch, logs=None):
+        self.total_time = time.time() - self.start_time
         epoch_time = time.time() - self.epoch_time_start
         wandb.log({
             'epoch_time': epoch_time,
-            'total_time': time.time() - self.start_time,
+            'total_time': self.total_time,
             'fps_per_epoch': self.items_per_epoch/epoch_time
         }, commit=False)
+        if self.time_limit is not None and self.total_time > self.time_limit:
+            logging.info(f'Total training time ({self.total_time:.2f} s) has exceeded the time limit (({self.time_limit:.2f} s). Stopping training.')
+            self.model.stop_training = True
+            self.exceeded_time_limit = True
+
+    def has_exceeded_time_limit(self):
+        return self.exceeded_time_limit
         # self.times.append(epoch_time)
         #self.total_times.append(time.time() - self.start_time)
         # self.fps_per_epoch.append(epoch_time/self.items_per_epoch)
@@ -148,8 +159,8 @@ class WandbTimeCallback(tf.keras.callbacks.Callback):
 if __name__ == '__main__':
 
     config = {
-        'project': 'lego447classes',
-        'name': 'EfficientNetB0-run',
+        'project': 'legotest',
+        'name': 'EfficientNetB0-test',
         'model': 'EfficientNetB0',
         'img_shape': (224, 224, 3),
         'max_epochs': 200,
@@ -171,8 +182,9 @@ if __name__ == '__main__':
         'fine_tuning_unfreeze_interval': 15,
         'dataset_train_dir': '/macierz/home/s165115/legosymlink/kzawora/dataset_new/train',
         'dataset_val_dir': '/macierz/home/s165115/legosymlink/kzawora/dataset_new/val',
-        'steps_per_epoch': None,
-        'optimizer': 'sgd'
+        'steps_per_epoch': 100,
+        'optimizer': 'sgd',
+        'time_limit': None
     }
     # with open('result.json', 'w') as fp:
     #    json.dump(config, fp)
@@ -201,7 +213,6 @@ if __name__ == '__main__':
 
     root = logging.getLogger()
     root.setLevel(logging.INFO)
-
     # tensorflow setup
     gpus = tf.config.list_physical_devices('GPU')
     for gpu in gpus:
@@ -228,16 +239,14 @@ if __name__ == '__main__':
     ms = ModelSelector(cfg)
     model = ms.get_model()
     width, height, depth = cfg['img_shape']
-    train_datagen = ImageDataGenerator(
-        preprocessing_function=ms.get_preprocessing_function())
+    train_datagen = ImageDataGenerator(preprocessing_function=ms.get_preprocessing_function())
     #train_datagen = ImageDataGenerator() if cfg['model'][:-1] == 'EfficientNetB' else ImageDataGenerator(rescale=1. / 255)
     train_generator = train_datagen.flow_from_directory(
         # '/macierz/home/s165115/legosymlink/kzawora/dataset_processed/train',
         cfg['dataset_train_dir'],
         target_size=(width, height),
         batch_size=cfg['batch_size'], shuffle=True)
-    val_datagen = ImageDataGenerator(
-        preprocessing_function=ms.get_preprocessing_function())
+    val_datagen = ImageDataGenerator(preprocessing_function=ms.get_preprocessing_function())
     #val_datagen = ImageDataGenerator() if cfg['model'] == 'EfficientNetB0' else ImageDataGenerator(rescale=1. / 255)
     val_generator = val_datagen.flow_from_directory(
         cfg['dataset_val_dir'],
@@ -246,9 +255,12 @@ if __name__ == '__main__':
     wandb_callback = WandbCallback(data_type='image',
                                    # training_data=val_generator[0][:cfg['wandb_val_images']],
                                    labels=list(train_generator.class_indices.keys()), predictions=10)
-    items_per_epoch = config['steps_per_epoch'] * \
-        config['batch_size'] if config['steps_per_epoch'] is not None else train_generator.samples
-    time_callback = WandbTimeCallback(time.time(), items_per_epoch)
+    items_per_epoch = config['steps_per_epoch'] * config['batch_size'] if config['steps_per_epoch'] is not None else train_generator.samples
+    logging.info(f'Images per epoch: {items_per_epoch}')
+    tl = cfg['time_limit']
+    logging.info(f'Time limit set to {tl:.2f} seconds')
+
+    time_callback = WandbTimeCallback(time.time(), items_per_epoch, time_limit=cfg['time_limit'])
 
     pre_training_early_stopping_callback = EarlyStopping(
         monitor='val_accuracy', mode='max', min_delta=cfg['pre_training_min_delta'], patience=cfg['pre_training_patience'], restore_best_weights=True)
@@ -266,9 +278,8 @@ if __name__ == '__main__':
         [1 for layer in model.layers if layer.trainable is True])}, commit=False)
     history = model.fit(train_generator, validation_data=val_generator,
                         epochs=cfg['pre_training_epochs'], callbacks=pre_training_callbacks, steps_per_epoch=cfg['steps_per_epoch'])
-
     # fine-tuning
-    if cfg['transfer_learning'] and not cfg['pre_training_only']:
+    if cfg['transfer_learning'] and not cfg['pre_training_only'] and not time_callback.has_exceeded_time_limit():
         for to_unfreeze in range(cfg['fine_tuning_unfreeze_interval'], len(model.layers), cfg['fine_tuning_unfreeze_interval']):
             model = ms.unfreeze_top_n_layers(
                 to_unfreeze, lr=cfg['fine_tuning_learning_rate'])
@@ -283,3 +294,5 @@ if __name__ == '__main__':
                 cfg['max_epochs_per_fit'] < cfg['max_epochs'] else cfg['max_epochs']
             history = model.fit(train_generator, validation_data=val_generator, initial_epoch=epochs_to_date,
                                 epochs=epochs_to_do, callbacks=fine_tuning_callbacks, steps_per_epoch=cfg['steps_per_epoch'])
+            if time_callback.has_exceeded_time_limit():
+                break
