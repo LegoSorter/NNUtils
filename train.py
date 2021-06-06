@@ -158,7 +158,7 @@ class WandbTimeCallback(tf.keras.callbacks.Callback):
 
 if __name__ == '__main__':
 
-    config = {
+    default_config = {
         'project': 'legotest',
         'name': 'EfficientNetB0-test',
         'model': 'EfficientNetB0',
@@ -193,7 +193,7 @@ if __name__ == '__main__':
         description='Sweep train.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(f'--json', type=str,
                         default=None, dest='json', help=f'json config filename. Ignores other arguments if provided.')
-    for key, value in config.items():
+    for key, value in default_config.items():
         if type(value) is tuple:
             parser.add_argument(f'--{key}', type=type(value[0]),
                                 default=value, dest=key, nargs='+', help=f'{key}')
@@ -255,7 +255,7 @@ if __name__ == '__main__':
     wandb_callback = WandbCallback(data_type='image',
                                    # training_data=val_generator[0][:cfg['wandb_val_images']],
                                    labels=list(train_generator.class_indices.keys()), predictions=10)
-    items_per_epoch = config['steps_per_epoch'] * config['batch_size'] if config['steps_per_epoch'] is not None else train_generator.samples
+    items_per_epoch = cfg['steps_per_epoch'] * cfg['batch_size'] if cfg['steps_per_epoch'] is not None else train_generator.samples
     logging.info(f'Images per epoch: {items_per_epoch}')
     tl = cfg['time_limit']
     logging.info(f'Time limit set to {tl:.2f} seconds')
