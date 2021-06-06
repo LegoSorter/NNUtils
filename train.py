@@ -6,9 +6,9 @@ from wandb.keras import WandbCallback
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.layers.experimental import preprocessing
-from tensorflow.keras.applications import ResNet50, EfficientNetB0, EfficientNetB1, EfficientNetB3, EfficientNetB4, EfficientNetB7, VGG16, ResNet50V2, InceptionV3
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
+import tensorflow.keras.applications as apps
 import os
 import logging
 import argparse
@@ -22,11 +22,36 @@ import json
 class ModelSelector():
     def get_model_map(self):
         return {
-            'EfficientNetB0': EfficientNetB0,
-            'EfficientNetB4': EfficientNetB4,
-            'ResNet50': ResNet50,
-            'ResNet50V2': ResNet50V2,
-            'InceptionV3': InceptionV3
+            'EfficientNetB0': apps.EfficientNetB0,
+            'EfficientNetB1': apps.EfficientNetB1,
+            'EfficientNetB2': apps.EfficientNetB2,
+            'EfficientNetB3': apps.EfficientNetB3,
+            'EfficientNetB4': apps.EfficientNetB4,
+            'EfficientNetB5': apps.EfficientNetB5,
+            'EfficientNetB6': apps.EfficientNetB6,
+            'EfficientNetB7': apps.EfficientNetB7,
+            'ResNet50': apps.ResNet50,
+            'ResNet50V2': apps.ResNet50V2,
+            'InceptionV3': apps.InceptionV3,
+            'VGG16': apps.VGG16,
+            'VGG19': apps.VGG19
+        }
+
+    def get_preprocessor_map(self):
+        return {
+            'EfficientNetB0': apps.efficientnet.preprocess_input,
+            'EfficientNetB1': apps.efficientnet.preprocess_input,
+            'EfficientNetB2': apps.efficientnet.preprocess_input,
+            'EfficientNetB3': apps.efficientnet.preprocess_input,
+            'EfficientNetB4': apps.efficientnet.preprocess_input,
+            'EfficientNetB5': apps.efficientnet.preprocess_input,
+            'EfficientNetB6': apps.efficientnet.preprocess_input,
+            'EfficientNetB7': apps.efficientnet.preprocess_input,
+            'ResNet50': apps.resnet.preprocess_input,
+            'ResNet50V2': apps.resnet_v2.preprocess_input,
+            'InceptionV3': apps.inception_v3.preprocess_input,
+            'VGG16': apps.vgg16.preprocess_input,
+            'VGG19': apps.vgg19.preprocess_input
         }
 
     def __init__(self, cfg):
@@ -41,6 +66,9 @@ class ModelSelector():
 
     def get_model(self):
         return self.model
+
+    def get_preprocessing_function(self):
+        return self.get_preprocessor_map()[self.cfg['model']]
 
     def get_optimizer(self, learning_rate):
         opt_name = self.cfg['optimizer']
@@ -164,8 +192,11 @@ if __name__ == '__main__':
     if args.json is not None:
         with open(args.json) as json_file:
             args = json.load(json_file)
+        wandb.init(project=args['project'], name=args['name'], config=args)
     else:
         del args.json
+        wandb.init(project=args.project, name=args.name, config=args)
+
     wandb.init(config=args)
 
     root = logging.getLogger()
@@ -198,14 +229,16 @@ if __name__ == '__main__':
     model = ms.get_model()
     width, height, depth = cfg['img_shape']
     train_datagen = ImageDataGenerator(
-    ) if cfg['model'] == 'EfficientNetB0' else ImageDataGenerator(rescale=1. / 255)
+        preprocessing_function=ms.get_preprocessing_function())
+    #train_datagen = ImageDataGenerator() if cfg['model'][:-1] == 'EfficientNetB' else ImageDataGenerator(rescale=1. / 255)
     train_generator = train_datagen.flow_from_directory(
         # '/macierz/home/s165115/legosymlink/kzawora/dataset_processed/train',
         cfg['dataset_train_dir'],
         target_size=(width, height),
         batch_size=cfg['batch_size'], shuffle=True)
     val_datagen = ImageDataGenerator(
-    ) if cfg['model'] == 'EfficientNetB0' else ImageDataGenerator(rescale=1. / 255)
+        preprocessing_function=ms.get_preprocessing_function())
+    #val_datagen = ImageDataGenerator() if cfg['model'] == 'EfficientNetB0' else ImageDataGenerator(rescale=1. / 255)
     val_generator = val_datagen.flow_from_directory(
         cfg['dataset_val_dir'],
         target_size=(width, height),

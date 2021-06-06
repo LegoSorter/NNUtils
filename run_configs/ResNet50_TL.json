@@ -1,7 +1,7 @@
 {
     "project":"lego-comparison",
-    "name":"EfficientNetB0_TL",
-    "model":"EfficientNetB0",
+    "name":"ResNet50_TL",
+    "model":"ResNet50",
     "img_shape":[224,224,3],
     "max_epochs":200,
     "max_epochs_per_fit":50,

@@ -1,8 +1,8 @@
 {
     "project":"lego-comparison",
-    "name":"EfficientNetB0_TL",
-    "model":"EfficientNetB0",
-    "img_shape":[224,224,3],
+    "name":"EfficientNetB3_TL",
+    "model":"EfficientNetB3",
+    "img_shape":[300,300,3],
     "max_epochs":200,
     "max_epochs_per_fit":50,
     "num_classes":447,
@@ -20,8 +20,8 @@
     "fine_tuning_min_delta":0.01,
     "fine_tuning_patience":2,
     "fine_tuning_unfreeze_interval":15,
-    "dataset_train_dir":"/macierz/home/s165115/legosymlink/kzawora/dataset_new_more_sizes_3/resized_224x224/train",
-    "dataset_val_dir":"/macierz/home/s165115/legosymlink/kzawora/dataset_new_more_sizes_3/resized_224x224/val",
+    "dataset_train_dir":"/macierz/home/s165115/legosymlink/kzawora/dataset_new_more_sizes_3/resized_300x300/train",
+    "dataset_val_dir":"/macierz/home/s165115/legosymlink/kzawora/dataset_new_more_sizes_3/resized_300x300/val",
     "steps_per_epoch":null,
     "optimizer":"adam"
  }

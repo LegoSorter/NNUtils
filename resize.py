@@ -23,7 +23,7 @@ def get_relative_directories(src: Path):
     return dirs
 
 def resize_images_in_directory(src, dst, rel_dir, sizes):
-    images = src.glob(f'*.jpeg')
+    images = src.glob(f'*.jpg')
    # print(len(list(images)))
    # return
     for image in images:
