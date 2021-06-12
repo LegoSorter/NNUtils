@@ -1,0 +1,8 @@
+{
+    "name":"EfficientNetB4",
+    "model":"EfficientNetB4",
+    "img_shape":[380,380,3],
+    "dataset_train_dir":"/macierz/home/s165115/legosymlink/kzawora/dataset_new_more_sizes_3/resized_380x380/train",
+    "dataset_val_dir":"/macierz/home/s165115/legosymlink/kzawora/dataset_new_more_sizes_3/resized_380x380/val"
+ }
+ 

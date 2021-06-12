@@ -15,6 +15,7 @@ import argparse
 import time
 from tensorflow.keras import mixed_precision
 import json
+import copy
 
 #os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
@@ -22,6 +23,9 @@ import json
 class ModelSelector():
     def get_model_map(self):
         return {
+            'DenseNet121': apps.DenseNet121,
+            'DenseNet169': apps.DenseNet169,
+            'DenseNet201': apps.DenseNet201,
             'EfficientNetB0': apps.EfficientNetB0,
             'EfficientNetB1': apps.EfficientNetB1,
             'EfficientNetB2': apps.EfficientNetB2,
@@ -30,15 +34,30 @@ class ModelSelector():
             'EfficientNetB5': apps.EfficientNetB5,
             'EfficientNetB6': apps.EfficientNetB6,
             'EfficientNetB7': apps.EfficientNetB7,
+            'InceptionResNetV2': apps.InceptionResNetV2,
+            'InceptionV3': apps.InceptionV3,
+            'MobileNet': apps.MobileNet,
+            'MobileNetV2': apps.MobileNetV2,
+            'MobileNetV3Large': apps.MobileNetV3Large,
+            'MobileNetV3Small': apps.MobileNetV3Small,
+            'NasNetLarge': apps.NASNetLarge,
+            'NasNetMobile': apps.NASNetMobile,
+            'ResNet101': apps.ResNet101,
+            'ResNet101V2': apps.ResNet101V2,
+            'ResNet152': apps.ResNet152,
+            'ResNet152V2': apps.ResNet152V2,
             'ResNet50': apps.ResNet50,
             'ResNet50V2': apps.ResNet50V2,
-            'InceptionV3': apps.InceptionV3,
             'VGG16': apps.VGG16,
-            'VGG19': apps.VGG19
+            'VGG19': apps.VGG19,
+            'Xception': apps.Xception
         }
 
     def get_preprocessor_map(self):
         return {
+            'DenseNet121': apps.densenet.preprocess_input,
+            'DenseNet169': apps.densenet.preprocess_input,
+            'DenseNet201': apps.densenet.preprocess_input,
             'EfficientNetB0': apps.efficientnet.preprocess_input,
             'EfficientNetB1': apps.efficientnet.preprocess_input,
             'EfficientNetB2': apps.efficientnet.preprocess_input,
@@ -47,11 +66,23 @@ class ModelSelector():
             'EfficientNetB5': apps.efficientnet.preprocess_input,
             'EfficientNetB6': apps.efficientnet.preprocess_input,
             'EfficientNetB7': apps.efficientnet.preprocess_input,
+            'InceptionResNetV2': apps.inception_resnet_v2.preprocess_input,
+            'InceptionV3': apps.inception_v3.preprocess_input,
+            'MobileNet': apps.mobilenet.preprocess_input,
+            'MobileNetV2': apps.mobilenet_v2.preprocess_input,
+            'MobileNetV3Large': apps.mobilenet_v3.preprocess_input,
+            'MobileNetV3Small': apps.mobilenet_v3.preprocess_input,
+            'NasNetLarge': apps.nasnet.preprocess_input,
+            'NasNetMobile': apps.nasnet.preprocess_input,
+            'ResNet101': apps.resnet.preprocess_input,
+            'ResNet101V2': apps.resnet_v2.preprocess_input,
+            'ResNet152': apps.resnet.preprocess_input,
+            'ResNet152V2': apps.resnet_v2.preprocess_input,
             'ResNet50': apps.resnet.preprocess_input,
             'ResNet50V2': apps.resnet_v2.preprocess_input,
-            'InceptionV3': apps.inception_v3.preprocess_input,
             'VGG16': apps.vgg16.preprocess_input,
-            'VGG19': apps.vgg19.preprocess_input
+            'VGG19': apps.vgg19.preprocess_input,
+            'Xception': apps.xception.preprocess_input
         }
 
     def __init__(self, cfg):
@@ -191,7 +222,7 @@ if __name__ == '__main__':
     # exit(0)
     parser = argparse.ArgumentParser(
         description='Sweep train.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument(f'--json', type=str,
+    parser.add_argument(f'--json', type=str, nargs='+',
                         default=None, dest='json', help=f'json config filename. Ignores other arguments if provided.')
     for key, value in default_config.items():
         if type(value) is tuple:
@@ -201,16 +232,18 @@ if __name__ == '__main__':
             parser.add_argument(f'--{key}', type=type(value),
                                 default=value, dest=key, help=f'{key}')
     args = parser.parse_args()
+
+    init_dict = copy.deepcopy(default_config)
     if args.json is not None:
-        with open(args.json) as json_file:
-            args = json.load(json_file)
-        wandb.init(project=args['project'], name=args['name'], config=args)
+        for json_path in args.json:
+            with open(json_path) as json_file:
+                args = json.load(json_file)
+                init_dict.update(args)
     else:
         del args.json
-        wandb.init(project=args.project, name=args.name, config=args)
+        init_dict = vars(args)
 
-    wandb.init(config=args)
-
+    wandb.init(project=init_dict['project'], name=init_dict['name'], config=init_dict)
     root = logging.getLogger()
     root.setLevel(logging.INFO)
     # tensorflow setup
