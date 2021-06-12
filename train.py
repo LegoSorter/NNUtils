@@ -16,6 +16,8 @@ import time
 from tensorflow.keras import mixed_precision
 import json
 import copy
+import itertools
+
 
 #os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
@@ -222,7 +224,9 @@ if __name__ == '__main__':
     # exit(0)
     parser = argparse.ArgumentParser(
         description='Sweep train.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument(f'--json', type=str, nargs='+',
+    parser.add_argument('--json', type=str, nargs='+', action='append',
+                        default=None, dest='json', help=f'json config filename. Ignores other arguments if provided.')
+    parser.add_argument('--net_json', type=str, nargs='+', action='append',
                         default=None, dest='json', help=f'json config filename. Ignores other arguments if provided.')
     for key, value in default_config.items():
         if type(value) is tuple:
@@ -235,14 +239,14 @@ if __name__ == '__main__':
 
     init_dict = copy.deepcopy(default_config)
     if args.json is not None:
-        for json_path in args.json:
+        for json_path in list(itertools.chain.from_iterable(args.json)):
             with open(json_path) as json_file:
                 args = json.load(json_file)
                 init_dict.update(args)
     else:
         del args.json
         init_dict = vars(args)
-
+    print(init_dict)
     wandb.init(project=init_dict['project'], name=init_dict['name'], config=init_dict)
     root = logging.getLogger()
     root.setLevel(logging.INFO)

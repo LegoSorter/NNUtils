@@ -1,39 +1,42 @@
 program: /macierz/home/s165115/mgr/NNUtils/train.py
 method: grid
-project: lego-comparison-4h
+project: lego-4h
 metric:
   name: val_accuracy
   goal: maximize
 parameters:
   json:
     values: [
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB1.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB0.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB2.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB3.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB7.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB6.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB5.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB4.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/ResNet50.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/ResNet50V2.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/DenseNet121.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/DenseNet169.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/DenseNet201.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/MobileNet.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/MobileNetV2.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/MobileNetV3Large.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/MobileNetV3Small.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/ResNet101.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/ResNet101V2.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/ResNet152.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/ResNet152V2.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/VGG16.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/VGG19.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/InceptionV3.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/InceptionResNetV2.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/Xception.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/NASNetMobile.json",
-        "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json /macierz/home/s165115/mgr/NNUtils/run_configs/networks/NASNetLarge.json"
-      ]
-  
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json"
+    ]
+  net_json:
+    values: [
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB0.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB1.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB2.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB3.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB7.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB6.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB5.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/EfficientNetB4.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/ResNet50.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/ResNet50V2.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/DenseNet121.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/DenseNet169.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/DenseNet201.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/MobileNet.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/MobileNetV2.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/MobileNetV3Large.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/MobileNetV3Small.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/ResNet101.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/ResNet101V2.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/ResNet152.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/ResNet152V2.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/VGG16.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/VGG19.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/InceptionV3.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/InceptionResNetV2.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/Xception.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/NASNetMobile.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/NASNetLarge.json"
+    ]
