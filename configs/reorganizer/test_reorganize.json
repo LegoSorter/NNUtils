@@ -1,0 +1,21 @@
+{
+    "source_dir": "/macierz/home/s165115/legosymlink/kzawora/test-dst/train",
+    "target_dir": "/macierz/home/s165115/legosymlink/kzawora/test-reorg/train",
+    "balance": true,
+    "photos_per_class": null,
+    "add_missing_classes": true,
+    "class_map": {
+        "class1": [
+            "822931",
+            "915460"
+        ],
+        "class2": [
+            "852929",
+            "901078",
+            "853045"
+        ],
+        "class3": [
+            "966967"
+        ]
+    }
+}

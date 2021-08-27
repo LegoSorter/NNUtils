@@ -1,0 +1,8 @@
+{
+    "name":"Xception",
+    "model":"Xception",
+    "img_shape":[299,299,3],
+    "dataset_train_dir":"/macierz/home/s165115/legosymlink/kzawora/dataset_new_more_sizes_3/resized_299x299/train",
+    "dataset_val_dir":"/macierz/home/s165115/legosymlink/kzawora/dataset_new_more_sizes_3/resized_299x299/val"
+ }
+ 

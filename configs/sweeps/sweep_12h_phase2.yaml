@@ -1,0 +1,18 @@
+program: /macierz/home/s165115/mgr/NNUtils/train.py
+method: grid
+project: lego-4h
+metric:
+  name: val_accuracy
+  goal: maximize
+parameters:
+  json:
+    values: [
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_12h.json"
+    ]
+  net_json:
+    values: [
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/VGG16.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/VGG19.json"
+    ]
+
+    

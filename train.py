@@ -42,8 +42,8 @@ class ModelSelector():
             'MobileNetV2': apps.MobileNetV2,
             'MobileNetV3Large': apps.MobileNetV3Large,
             'MobileNetV3Small': apps.MobileNetV3Small,
-            'NasNetLarge': apps.NASNetLarge,
-            'NasNetMobile': apps.NASNetMobile,
+            'NASNetLarge': apps.NASNetLarge,
+            'NASNetMobile': apps.NASNetMobile,
             'ResNet101': apps.ResNet101,
             'ResNet101V2': apps.ResNet101V2,
             'ResNet152': apps.ResNet152,
@@ -74,10 +74,10 @@ class ModelSelector():
             'MobileNetV2': apps.mobilenet_v2.preprocess_input,
             'MobileNetV3Large': apps.mobilenet_v3.preprocess_input,
             'MobileNetV3Small': apps.mobilenet_v3.preprocess_input,
-            'NasNetLarge': apps.nasnet.preprocess_input,
-            'NasNetMobile': apps.nasnet.preprocess_input,
+            'NASNetLarge': apps.nasnet.preprocess_input,
+            'NASNetMobile': apps.nasnet.preprocess_input,
             'ResNet101': apps.resnet.preprocess_input,
-            'ResNet101V2': apps.resnet_v2.preprocess_input,
+            'ResNet101V2': apps.resnet_v2.preprocess_input,     
             'ResNet152': apps.resnet.preprocess_input,
             'ResNet152V2': apps.resnet_v2.preprocess_input,
             'ResNet50': apps.resnet.preprocess_input,
@@ -87,15 +87,16 @@ class ModelSelector():
             'Xception': apps.xception.preprocess_input
         }
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, init_build=True):
         self.cfg = cfg
         model_name = self.cfg['model']
-        try:
-            model_module = self.get_model_map()[model_name]
-            self.model = self.generic_builder(
-                model_name, model_module, lr=self.cfg['pre_training_learning_rate'])
-        except KeyError:
-            raise Exception(f'Invalid model name: {model_name}')
+        if init_build:
+            try:
+                model_module = self.get_model_map()[model_name]
+                self.model = self.generic_builder(
+                    model_name, model_module, lr=self.cfg['pre_training_learning_rate'])
+            except KeyError:
+                raise Exception(f'Invalid model name: {model_name}')
 
     def get_model(self):
         return self.model
@@ -128,7 +129,7 @@ class ModelSelector():
         cfg = self.cfg
         inputs = layers.Input(shape=cfg['img_shape'])
         x = img_augmentation(inputs)
-        if cfg['transfer_learning']:
+        if cfg['transfer_learning'] and not cfg['dynamic_reorg_enabled']:
             model = net(include_top=False, input_tensor=x, weights='imagenet')
 
             # Freeze the pretrained weights
@@ -141,16 +142,31 @@ class ModelSelector():
             x = layers.Dropout(top_dropout_rate, name="top_dropout")(x)
             outputs = layers.Dense(
                 cfg['num_classes'], activation="softmax", name="pred")(x)
+            model = tf.keras.Model(inputs, outputs, name=name)
+        elif cfg['dynamic_reorg_enabled']:
+            model_path = cfg['dynamic_reorg_model_path']
+            if cfg['dynamic_reorg_wandb_run_name'] != None:           
+                wandb_model = wandb.restore('model-best.h5', run_path="kzawora/lego-4h/runs/66z3b5tl")
+                model_path = wandb_model.name
+            model = tf.keras.models.load_model(model_path)
+            model.trainable = False
+            dense_input_tensor = model.output if cfg['dynamic_reorg_preserve_top_layer'] else model.layers[-2].output
+            outputs = layers.Dense(cfg['num_classes'], activation="softmax", name="pred_reorg")(dense_input_tensor)
+            model = tf.keras.Model(model.input, outputs)
         else:
-            model = net(include_top=False, input_tensor=x, weights=None)
-            model.trainable = True
-            top_dropout_rate = dropout_rate
-            x = layers.Dropout(top_dropout_rate, name="top_dropout")(x)
-            outputs = layers.Dense(
-                cfg['num_classes'], activation="softmax", name="pred")(x)
+            model = net(include_top=True, input_tensor=x, weights=None, classes=cfg['num_classes'])
+            #model.trainable = True
+
+            # Rebuild top
+#            x = layers.GlobalAveragePooling2D(name="avg_pool")(model.output)
+#            x = layers.BatchNormalization()(x)
+           # top_dropout_rate = dropout_rate
+           # x = layers.Dropout(top_dropout_rate, name="top_dropout")(model.output)
+            #outputs = layers.Dense(
+            #    cfg['num_classes'], activation="softmax", name="pred")(x)
 
         # Compile
-        model = tf.keras.Model(inputs, outputs, name=name)
+
         optimizer = self.get_optimizer(learning_rate=lr)
         model.compile(
             optimizer=optimizer, loss="categorical_crossentropy", metrics=["accuracy", "top_k_categorical_accuracy"]
@@ -192,33 +208,43 @@ class WandbTimeCallback(tf.keras.callbacks.Callback):
 if __name__ == '__main__':
 
     default_config = {
+        # W&B config
         'project': 'legotest',
         'name': 'EfficientNetB0-test',
+        'dataset': 'LEGO_447c',
+        'architecture': 'CNN',
+        'wandb_val_images': 10,
+        # Network/data specific
         'model': 'EfficientNetB0',
         'img_shape': (224, 224, 3),
-        'max_epochs': 200,
-        'max_epochs_per_fit': 50,
+        'dataset_train_dir': '/macierz/home/s165115/legosymlink/kzawora/dataset_new/train',
+        'dataset_val_dir': '/macierz/home/s165115/legosymlink/kzawora/dataset_new/val',
         'num_classes': 447,
-        'batch_size': 128,
-        'architecture': 'CNN',
-        'dataset': 'LEGO_447c',
-        'wandb_val_images': 10,
+        # Training process configuration
         'transfer_learning': True,
-        'pre_training_epochs': 25,
         'pre_training_only': False,
+        'max_epochs': 200,
+        'optimizer': 'adam',
+        'time_limit': None,
+        'steps_per_epoch': None,
+        # Training/Callback hyperparameters
+        'batch_size': 128,
+        'max_epochs_per_fit': 50,
+        'pre_training_epochs': 25,
         'pre_training_learning_rate': 1e-2,
         'pre_training_min_delta': 0.01,
         'pre_training_patience': 5,
+        'fine_tuning_unfreeze_interval': 15,
         'fine_tuning_learning_rate': 1e-4,
         'fine_tuning_min_delta': 0.01,
         'fine_tuning_patience': 5,
-        'fine_tuning_unfreeze_interval': 15,
-        'dataset_train_dir': '/macierz/home/s165115/legosymlink/kzawora/dataset_new/train',
-        'dataset_val_dir': '/macierz/home/s165115/legosymlink/kzawora/dataset_new/val',
-        'steps_per_epoch': 100,
-        'optimizer': 'sgd',
-        'time_limit': None
+        # Dynamic reorganization
+        'dynamic_reorg_enabled': False,
+        'dynamic_reorg_wandb_run_name': None,
+        'dynamic_reorg_model_path': None,
+        'dynamic_reorg_preserve_top_layer': False
     }
+
     # with open('result.json', 'w') as fp:
     #    json.dump(config, fp)
     # exit(0)
@@ -275,6 +301,7 @@ if __name__ == '__main__':
     cfg = wandb.config
     ms = ModelSelector(cfg)
     model = ms.get_model()
+    model.summary()
     width, height, depth = cfg['img_shape']
     train_datagen = ImageDataGenerator(preprocessing_function=ms.get_preprocessing_function())
     #train_datagen = ImageDataGenerator() if cfg['model'][:-1] == 'EfficientNetB' else ImageDataGenerator(rescale=1. / 255)
@@ -282,13 +309,13 @@ if __name__ == '__main__':
         # '/macierz/home/s165115/legosymlink/kzawora/dataset_processed/train',
         cfg['dataset_train_dir'],
         target_size=(width, height),
-        batch_size=cfg['batch_size'], shuffle=True)
+        batch_size=cfg['batch_size'], shuffle=True, color_mode='grayscale')
     val_datagen = ImageDataGenerator(preprocessing_function=ms.get_preprocessing_function())
     #val_datagen = ImageDataGenerator() if cfg['model'] == 'EfficientNetB0' else ImageDataGenerator(rescale=1. / 255)
     val_generator = val_datagen.flow_from_directory(
         cfg['dataset_val_dir'],
         target_size=(width, height),
-        batch_size=cfg['batch_size'], shuffle=True)
+        batch_size=cfg['batch_size'], shuffle=True, color_mode='grayscale')
     wandb_callback = WandbCallback(data_type='image',
                                    # training_data=val_generator[0][:cfg['wandb_val_images']],
                                    labels=list(train_generator.class_indices.keys()), predictions=10)
@@ -333,3 +360,16 @@ if __name__ == '__main__':
                                 epochs=epochs_to_do, callbacks=fine_tuning_callbacks, steps_per_epoch=cfg['steps_per_epoch'])
             if time_callback.has_exceeded_time_limit():
                 break
+        print("Entire network unfreezed.")
+        while not time_callback.has_exceeded_time_limit():
+            print('Time limit not exceeded. Training full net...')
+            trainable_layers = len([1 for layer in model.layers if layer.trainable is True])
+            wandb.log({'trainable_layers': trainable_layers}, commit=False)
+            logging.info(f'Fine-tuning on {trainable_layers}')
+            epochs_to_date += len(history.history['loss'])
+            if epochs_to_date >= cfg['max_epochs']:
+                break
+            epochs_to_do = epochs_to_date+cfg['max_epochs_per_fit'] if epochs_to_date + \
+                cfg['max_epochs_per_fit'] < cfg['max_epochs'] else cfg['max_epochs']
+            history = model.fit(train_generator, validation_data=val_generator, initial_epoch=epochs_to_date,
+                                epochs=epochs_to_do, callbacks=fine_tuning_callbacks, steps_per_epoch=cfg['steps_per_epoch'])

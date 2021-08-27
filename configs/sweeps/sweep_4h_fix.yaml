@@ -1,0 +1,19 @@
+program: /macierz/home/s165115/mgr/NNUtils/train.py
+method: grid
+project: lego-4h
+metric:
+  name: val_accuracy
+  goal: maximize
+parameters:
+  json:
+    values: [
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/tl_4h.json"
+    ]
+  net_json:
+    values: [
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/NASNetLarge.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/NASNetMobile.json",
+      "/macierz/home/s165115/mgr/NNUtils/run_configs/networks/Xception.json"
+    ]
+
+    

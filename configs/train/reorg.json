@@ -1,0 +1,35 @@
+{
+    "project":"lego-reorg-4h",
+    "max_epochs":200,
+    "max_epochs_per_fit":50,
+    "num_classes":413,
+    "batch_size":128,
+    "architecture":"CNN",
+    "dataset":"LEGO_447c",
+    "wandb_val_images":10,
+    "transfer_learning":true,
+    "pre_training_epochs":25,
+    "pre_training_only":true,
+    "pre_training_learning_rate":0.01,
+    "pre_training_min_delta":0.01,
+    "pre_training_patience":2,
+    "fine_tuning_learning_rate":0.0001,
+    "fine_tuning_min_delta":0.01,
+    "fine_tuning_patience":2,
+    "fine_tuning_unfreeze_interval":15,
+    "steps_per_epoch":null,
+    "optimizer":"adam",
+    "time_limit": 14400,
+
+    "name":"VGG16",
+    "model":"VGG16",
+    "img_shape":[224,224,3],
+    "dataset_train_dir":"/macierz/home/s165115/legosymlink/kzawora/dynamic_reorg/224x224/train",
+    "dataset_val_dir":"/macierz/home/s165115/legosymlink/kzawora/dynamic_reorg/224x224/val",
+    
+    "dynamic_reorg_enabled": true,
+    "dynamic_reorg_wandb_run_name":"kzawora/lego-4h/runs/66z3b5tl",
+    "dynamic_reorg_model_path":null,
+    "dynamic_reorg_preserve_top_layer":false
+ }
+ 

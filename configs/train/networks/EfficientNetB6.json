@@ -2,6 +2,7 @@
     "name":"EfficientNetB6",
     "model":"EfficientNetB6",
     "img_shape":[528,528,3],
+    "batch_size":32,
     "dataset_train_dir":"/macierz/home/s165115/legosymlink/kzawora/dataset_new_more_sizes_3/resized_528x528/train",
     "dataset_val_dir":"/macierz/home/s165115/legosymlink/kzawora/dataset_new_more_sizes_3/resized_528x528/val"
  }

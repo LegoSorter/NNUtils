@@ -1,0 +1,20 @@
+{
+    "project":"lego-comparison-notl-4h",
+    "max_epochs":200,
+    "max_epochs_per_fit":200,
+    "num_classes":447,
+    "batch_size":32,
+    "architecture":"CNN",
+    "dataset":"LEGO_447c",
+    "wandb_val_images":10,
+    "transfer_learning":false,
+    "pre_training_epochs":200,
+    "pre_training_only":false,
+    "pre_training_learning_rate":0.01,
+    "pre_training_min_delta":0,
+    "pre_training_patience":0,
+    "steps_per_epoch":null,
+    "optimizer":"adam",
+    "time_limit": 14400
+ }
+ 

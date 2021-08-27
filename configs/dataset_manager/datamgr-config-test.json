@@ -24,7 +24,9 @@
       "position": "center"
   },
   "cpu_threads": 32,
-  "dst": "/macierz/home/s165115/legosymlink/kzawora/test-dst",
-  "delete_individual_dsts": false,
-  "split_augment_merge": true
+  "dst": "/macierz/home/s165115/legosymlink/kzawora/test-edgecenter-good",
+  "delete_individual_dsts": true,
+  "split_augment_merge": true,
+  "create_resized_versions": false,
+  "size_list": [224, 240, 260, 300, 380, 456, 528]
 }
